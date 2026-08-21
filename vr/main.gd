@@ -21,7 +21,7 @@ var keyboard_keys: Array[StaticBody3D] = []
 
 func _ready() -> void:
     var xr := XRServer.find_interface("OpenXR")
-    if xr and xr.is_initialized() == false:
+    if xr and not xr.is_initialized():
         xr.initialize()
     if xr and xr.is_initialized():
         XRServer.primary_interface = xr
@@ -49,11 +49,9 @@ func _build_environment() -> void:
     _add_box("Desk", Vector3(0, 0.78, -1.35), Vector3(4.2, 0.18, 1.65), Color(0.20, 0.13, 0.09), false)
     _add_box("DeskFront", Vector3(0, 0.40, -0.62), Vector3(4.2, 0.65, 0.12), Color(0.15, 0.09, 0.06), false)
 
-    # Monitor and its stand.
     _add_box("MonitorFrame", Vector3(0, 1.68, -2.05), Vector3(3.05, 1.80, 0.14), Color(0.025, 0.028, 0.035), false)
-    var stand := _add_box("MonitorStand", Vector3(0, 0.98, -2.02), Vector3(0.16, 0.72, 0.16), Color(0.07, 0.075, 0.09), false)
+    _add_box("MonitorStand", Vector3(0, 0.98, -2.02), Vector3(0.16, 0.72, 0.16), Color(0.07, 0.075, 0.09), false)
     _add_box("MonitorFoot", Vector3(0, 0.86, -2.02), Vector3(1.05, 0.08, 0.50), Color(0.06, 0.065, 0.075), false)
-    stand.visible = true
 
     var quad := QuadMesh.new()
     quad.size = SCREEN_SIZE
@@ -69,9 +67,9 @@ func _build_environment() -> void:
     add_child(screen)
 
     screen_body = _make_box_body("TouchscreenInput", screen.position, Vector3(SCREEN_SIZE.x, SCREEN_SIZE.y, 0.10), Color.TRANSPARENT, false)
+    screen_body.get_child(0).visible = false
     screen_body.set_meta("pcvr_type", "screen")
 
-    # PC tower.
     _add_box("PC_Tower", Vector3(1.55, 0.95, -1.55), Vector3(0.62, 1.10, 0.72), Color(0.045, 0.05, 0.06), false)
     _add_box("TowerGlass", Vector3(1.55, 0.97, -1.19), Vector3(0.48, 0.82, 0.025), Color(0.08, 0.12, 0.15), false)
     _add_box("TowerLight", Vector3(1.55, 0.62, -1.14), Vector3(0.32, 0.025, 0.025), Color(0.15, 0.55, 1.0), false)
@@ -343,7 +341,7 @@ func _update_mouse_from_screen(point: Vector3) -> void:
     var ny := clamp(0.5 - local.y / SCREEN_SIZE.y, 0.0, 1.0)
     Network.mouse_move(nx, ny)
 
-func _activate_target(collider: Node, point: Vector3) -> void:
+func _activate_target(collider: Node, _point: Vector3) -> void:
     var kind: String = collider.get_meta("pcvr_type")
     if kind == "screen":
         Network.mouse_click("left")
