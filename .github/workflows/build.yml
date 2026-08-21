@@ -62,7 +62,7 @@ jobs:
         run: |
           mkdir -p artifacts
           ./Godot_v4.4.1-stable_linux.x86_64 --headless --path vr --editor --quit
-          ./Godot_v4.4.1-stable_linux.x86_64 --headless --path vr --export-debug "Android Quest" ../artifacts/ConnectToPCVR.apk
+          ./Godot_v4.4.1-stable_linux.x86_64 --headless --path vr --export-debug "Android Phone" ../artifacts/ConnectToPCVR.apk
       - uses: actions/upload-artifact@v4
         with:
           name: ConnectToPCVR-Android
