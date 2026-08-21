@@ -8,12 +8,16 @@ from tkinter import ttk
 import cv2
 import mss
 import numpy as np
+import pyautogui
 
 PORT = 48150
 WIDTH, HEIGHT = 1280, 720
 FPS = 60
 JPEG_QUALITY = 70
 MAGIC = b"PCVR1"
+
+pyautogui.PAUSE = 0
+pyautogui.FAILSAFE = False
 
 
 def local_ip():
@@ -33,6 +37,7 @@ class Host:
         self.running = False
         self.client = None
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.sock.bind(("0.0.0.0", PORT))
         self.sock.settimeout(0.1)
         self.seq = 0
@@ -40,13 +45,55 @@ class Host:
     def listen(self):
         while self.running:
             try:
-                data, addr = self.sock.recvfrom(256)
-                if data.startswith(b"HELLO"):
+                data, addr = self.sock.recvfrom(2048)
+                if data.startswith(b"HELLO PCVR1"):
                     self.client = addr
                     self.status.set(f"Connected: {addr[0]}:{addr[1]}")
                     self.sock.sendto(b"WELCOME PCVR1", addr)
+                    continue
+                if self.client is not None and addr == self.client and data.startswith(b"INPUT "):
+                    self.handle_input(data[6:].decode("utf-8", errors="ignore"))
             except socket.timeout:
                 pass
+            except OSError:
+                break
+            except Exception as exc:
+                self.status.set(f"Input error: {exc}")
+
+    def handle_input(self, message: str):
+        parts = message.split()
+        if not parts:
+            return
+        command = parts[0].upper()
+        try:
+            if command == "MOUSE" and len(parts) >= 3:
+                x = max(0.0, min(1.0, float(parts[1])))
+                y = max(0.0, min(1.0, float(parts[2])))
+                with mss.mss() as sct:
+                    monitor = sct.monitors[1]
+                    px = monitor["left"] + int(x * max(1, monitor["width"] - 1))
+                    py = monitor["top"] + int(y * max(1, monitor["height"] - 1))
+                pyautogui.moveTo(px, py, duration=0)
+            elif command == "CLICK" and len(parts) >= 2:
+                button = parts[1].lower()
+                if button in {"left", "right", "middle"}:
+                    pyautogui.click(button=button)
+            elif command == "KEY" and len(parts) >= 2:
+                key = parts[1].lower()
+                allowed = {
+                    "esc", "tab", "capslock", "shift", "ctrl", "alt", "space",
+                    "enter", "backspace", "delete", "home", "end", "pageup", "pagedown",
+                    "up", "down", "left", "right", "insert", "f1", "f2", "f3", "f4",
+                    "f5", "f6", "f7", "f8", "f9", "f10", "f11", "f12",
+                    "0", "1", "2", "3", "4", "5", "6", "7", "8", "9",
+                    "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m",
+                    "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z",
+                    ",", ".", "/", "\\", "-", "=", "[", "]", ";", "'"
+                }
+                if key in allowed:
+                    pyautogui.press(key)
+        except Exception as exc:
+            self.status.set(f"Input error: {exc}")
 
     def stream(self):
         interval = 1.0 / FPS
@@ -68,7 +115,6 @@ class Host:
                 if not ok:
                     continue
                 payload = encoded.tobytes()
-                # UDP packet framing. Frames larger than the network MTU are split into chunks.
                 chunk_size = 60000
                 count = (len(payload) + chunk_size - 1) // chunk_size
                 self.seq = (self.seq + 1) & 0xFFFFFFFF
@@ -98,7 +144,7 @@ class Host:
 def main():
     root = tk.Tk()
     root.title("Connect to PC VR")
-    root.geometry("430x190")
+    root.geometry("470x210")
     root.resizable(False, False)
     status = tk.StringVar(value="Ready")
     host = Host(status)
