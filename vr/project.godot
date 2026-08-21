@@ -8,21 +8,12 @@ window/size/viewport_width=1280
 window/size/viewport_height=720
 window/size/window_width_override=1280
 window/size/window_height_override=720
+window/stretch/mode="canvas_items"
+
+[autoload]
+Network="*res://network.gd"
 
 [rendering]
 renderer/rendering_method="gl_compatibility"
 renderer/rendering_method.mobile="gl_compatibility"
 textures/default_filters/use_nearest_mipmap_filter=false
-
-[autoload]
-Network="*res://network.gd"
-
-[xr]
-openxr/enabled=true
-openxr/form_factor=0
-openxr/view_configuration=1
-openxr/reference_space=1
-openxr/startup_alert=false
-shaders/enabled=true
-openxr/foveation_level=2
-openxr/foveation_dynamic=true
