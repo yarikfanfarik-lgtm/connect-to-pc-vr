@@ -1,7 +1,7 @@
 extends Node
 
 const PORT := 48150
-const MAGIC := "PCVR1".to_utf8_buffer()
+const MAGIC := "PCVR1"
 var socket := PacketPeerUDP.new()
 var connected := false
 var frame_id := -1
@@ -39,9 +39,9 @@ func _process(_delta: float) -> void:
         return
     while socket.get_available_packet_count() > 0:
         var p := socket.get_packet()
-        if p.begins_with("WELCOME".to_utf8_buffer()):
+        if p.size() >= 7 and p.slice(0, 7) == "WELCOME".to_utf8_buffer():
             continue
-        if p.size() < 13 or p.slice(0, 5) != MAGIC:
+        if p.size() < 13 or p.slice(0, 5) != MAGIC.to_utf8_buffer():
             continue
         var id := p.decode_u32(5)
         var index := p.decode_u16(9)
