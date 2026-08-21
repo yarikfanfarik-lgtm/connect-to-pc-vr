@@ -7,6 +7,9 @@ var status: Label
 var panel: Control
 
 func _ready():
+    var xr := XRServer.find_interface("OpenXR")
+    if xr and xr.initialize():
+        get_viewport().use_xr = true
     _build_scene()
     Network.frame_ready.connect(_on_frame)
 
@@ -21,7 +24,7 @@ func _build_scene():
     var cam := Camera3D.new()
     cam.position = Vector3(0, 0, 0.2)
     add_child(cam)
-    current_camera = cam
+    cam.current = true
 
     var mesh := QuadMesh.new()
     mesh.size = Vector2(2.4, 1.35)
